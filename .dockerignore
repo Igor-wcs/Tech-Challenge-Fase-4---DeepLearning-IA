@@ -1,0 +1,22 @@
+# Python - Arquivos temporários e compilados
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Scripts de Automação Local (Devem rodar no PC, não no Docker)
+start_project.py
+test_api.py
+
+# Git - Metadados de versão
+.git
+.gitignore
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Outros arquivos desnecessários
+.DS_Store
+*.log
