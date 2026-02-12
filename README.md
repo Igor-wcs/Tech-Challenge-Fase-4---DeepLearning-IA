@@ -102,7 +102,7 @@ Para garantir a escalabilidade e consistência do ambiente, utilize os comandos 
 
 ------------------------------------------------------------------------
 
-## 📂 📂 Estrutura do Projeto
+## 📂 Estrutura do Projeto
 
 * `lstm.ipynb`: Jupyter Notebook contendo a análise exploratória, pré-processamento, treinamento e avaliação do modelo.
 * `main.py`: Aplicação FastAPI que carrega o modelo treinado e expõe o endpoint de previsão.
@@ -110,17 +110,19 @@ Para garantir a escalabilidade e consistência do ambiente, utilize os comandos 
 * `requirements.txt`: Lista de dependências do projeto.
 * `start_project.py`: Script utilitário para construir e rodar o container Docker automaticamente.
 * `test_api.py`: Script para testar a API enviando dados reais recentes.
+  
+# Estrutura do Projeto
 
     📁 projeto-meta-lstm
-    │── lstm.ipynb          → Treinamento e validação do modelo
-    │── main.py             → API FastAPI com endpoint de previsão
-    │── Dockerfile          → Configuração do container
-    │── requirements.txt    → Dependências
-    │── start_project.py    → Execução automática do Docker
-    │── test_api.py         → Script de teste da API
-    │── environment ──
-                      │── modelo_lstm.pth
-                      │── scaler.pkl
+    │── lstm.ipynb              → Treinamento e validação do modelo
+    │── main.py                 → API FastAPI com endpoint de previsão
+    │── Dockerfile              → Configuração do container
+    │── requirements.txt        → Dependências
+    │── start_project.py        → Execução automática do Docker
+    │── test_api.py             → Script de teste da API
+    │── environment/
+    │   ├── modelo_lstm.pth     → Modelo treinado
+    │   └── scaler.pkl          → Scaler usado na normalização
 
 ------------------------------------------------------------------------
 
