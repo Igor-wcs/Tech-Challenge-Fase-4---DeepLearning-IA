@@ -4,7 +4,10 @@ import joblib
 import numpy as np
 import yfinance as yf
 import logging
-from fastapi import FastAPI, HTTPException
+import os
+import time
+import psutil
+from fastapi import FastAPI, HTTPException, Request
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import List
@@ -33,16 +36,46 @@ app = FastAPI(title="API de Previsão de Ações - META", description="Tech Chal
 modelo = None
 scaler = None
 
+@app.middleware("http")
+async def monitor_performance(request: Request, call_next):
+    start_time = time.time() # Marca hora de início
+    
+    # Processa a requisição (chama a rota real)
+    response = await call_next(request)
+    
+    # Calcula duração
+    process_time = time.time() - start_time
+
+    # Coleta métricas de Hardware (CPU e RAM)
+    process = psutil.Process(os.getpid())
+    mem_usage = process.memory_info().rss / 1024 / 1024  # Converte Bytes para MB
+    cpu_usage = process.cpu_percent()
+    
+    # Adiciona o tempo no Header da resposta
+    response.headers["X-Process-Time"] = str(process_time)
+    response.headers["X-Memory-MB"] = str(round(mem_usage, 2))
+    
+    # Registra no Log
+    logger.info(
+        f"ROTA: {request.url.path} | "
+        f"STATUS: {response.status_code} | "
+        f"TEMPO: {process_time:.4f}s | "
+        f"RAM: {mem_usage:.2f}MB | "
+        f"CPU: {cpu_usage}%"
+    )
+    
+    return response
+
 @app.on_event("startup")
 def load_artifacts():
     global modelo, scaler
     try:
         # Carregar o Scaler
-        scaler = joblib.load('scaler.pkl')
+        scaler = joblib.load('environment/scaler.pkl')
         # Instanciar e Carregar o Modelo
         # Nota: Os parâmetros (1, 60, 1) devem ser os mesmos usados no treino!
         modelo = ModeloLSTM(input_size=1, hidden_size=60, output_size=1)
-        modelo.load_state_dict(torch.load('modelo_lstm_meta.pth'))
+        modelo.load_state_dict(torch.load('environment/modelo_lstm_meta.pth', map_location=torch.device('cpu')))
         modelo.eval() # Modo de avaliação (importante!)
         print("Modelo e Scaler carregados com sucesso!")
         print("\n" + "="*50)
@@ -52,16 +85,18 @@ def load_artifacts():
         print("="*50 + "\n")
     except Exception as e:
         print(f"Erro ao carregar arquivos: {e}")
+        raise e
 
+# Definição do Formato de Saída
+class PredictionOutput(BaseModel):
+    ticker: str
+    predicted_price: float
+    execution_time: float
 
-#DEFINIÇÃO DO FORMATO DE ENTRADA (Input Schema)
-class StockData(BaseModel):
-    prices: List[float] # O usuário deve enviar uma lista de preços (float)
-
-#DEFINIÇÃO DO FORMATO DE SAÍDA (Output Schema)
+#DEFINIÇÃO ROTA DE PREVISÃO
 @app.get("/predict_auto/{ticker}")
 def predict_auto(ticker: str):
-    global modelo, scaler
+    start_process = time.time()
     ticker = ticker.upper()
 
     logger.info(f"Recebida requisição para o ticker: {ticker}")
@@ -94,7 +129,8 @@ def predict_auto(ticker: str):
         return {
             "status": "sucesso",
             "ticker": ticker,
-            "predicted_next_close": round(float(pred_real), 2)
+            "predicted_next_close": round(float(pred_real), 2),
+            "model_execution_time": round(time.time() - start_process, 4)
         }
 
     except HTTPException as http_e:
@@ -107,8 +143,3 @@ def predict_auto(ticker: str):
 @app.get("/")
 def home():
     return {"message": "API de Previsão Automática Online! Use /predict_auto/META"}
-
-# Rota de teste
-@app.get("/")
-def home():
-    return {"message": "API de Previsão de Ações está Online!"}

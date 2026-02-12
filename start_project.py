@@ -3,7 +3,7 @@ import webbrowser
 import time
 import os
 
-# Configurações do seu Tech Challenge
+# Configurações
 IMAGE_NAME = "api-meta-auto"
 URL = "http://localhost:8000/docs"
 

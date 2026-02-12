@@ -1,43 +1,33 @@
-import yfinance as yf
 import requests
-import json
+import time
 
 ticker = "META"
-api_url = "http://localhost:8000/predict/"
+api_url = f"http://localhost:8000/predict_auto/{ticker}"
 
-print(f"Obtendo dados históricos para {ticker}")
+print(f"--- TESTANDO API PARA O TICKER: {ticker} ---")
 
-# Buscar o histórico de preços usando yfinance
-data = yf.download(ticker, period="90d")
-
-# Preparar os dados para a requisição
-# Pegamos apenas a coluna 'Close' (Fechamento) e os últimos 60 registros
-real_prices = data['Close'].tail(60).values.tolist()
-
-# Garantia de tratamento de valores para float para evitar erro
-cleaned_prices = [float(price) for price in real_prices]
-print(f" Coletados {len(cleaned_prices)} preços.")
-
-# Criar o payload JSON
-payload = {
-    "ticker": ticker,
-    "prices": cleaned_prices
-}
-
-# Enviar para a API rodando no Docker
 try:
-    print("Enviando requisição para a API")
-    response = requests.post(api_url, json=payload)
+    start = time.time()
     
+    # Faz a requisição GET (igual ao navegador)
+    print(f"Enviando requisição para: {api_url}")
+    response = requests.get(api_url)
+    
+    duration = time.time() - start
+
     if response.status_code == 200:
         resultado = response.json()
-        print("\nRESPOSTA DA API:")
+        print("\nSUCESSO! RESPOSTA DA API:")
         print(f"Ticker: {resultado['ticker']}")
-        print(f"Preço Previsto para amanhã: ${resultado['predicted_price']}")
-        print(f"Último preço real hoje: ${round(cleaned_prices[-1], 2)}")
+        print(f"Previsão Fechamento: ${resultado['predicted_next_close']}")
+        print(f"Tempo total do request: {duration:.4f} segundos")
+        
+        if "X-Process-Time" in response.headers:
+            print(f"Tempo interno do servidor (Header): {response.headers['X-Process-Time']}s")
     else:
-        print(f"Erro na API: {response.status_code}")
+        print(f"\nERRO NA API: {response.status_code}")
         print(response.text)
 
 except Exception as e:
-    print(f"Erro ao conectar na API: {e}")
+    print(f"\nERRO DE CONEXÃO: {e}")
+    print("Certifique-se que o Docker está rodando: 'docker run -p 8000:8000 api-meta-auto'")

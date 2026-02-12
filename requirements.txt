@@ -9,3 +9,4 @@ yfinance
 seaborn
 matplotlib
 pandas
+psutil

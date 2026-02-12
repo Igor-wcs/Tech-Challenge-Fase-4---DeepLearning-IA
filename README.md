@@ -56,21 +56,53 @@ $$RMSE = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2$$
 
 ---
 
-## 🚀 Como Executar
+## Como Executar
 
 ### Pré-requisitos
 * Docker Desktop instalado e em execução.
-* Python 3.11+ (apenas se desejar executar scripts locais de teste).
+* Python 3.11+ (se quiser rodar scripts locais).
 
-### Opção 1: Execução Automática (Recomendado)
+### Execução Automática (Recomendado)
 O projeto inclui um script de automação que constrói a imagem, inicia o container e abre a documentação no navegador automaticamente:
 
-```bash
+``` bash
 python start_project.py
+```
 
 ---
 
-## 📂 Estrutura de Arquivos
+------------------------------------------------------------------------
+
+### Execução Manual via Docker
+
+Para garantir a escalabilidade e consistência do ambiente, utilize os comandos abaixo (requer **Docker Desktop** ativo):
+
+
+1.  **Acesse o diretório do projeto:**
+
+    ``` bash
+    cd caminho/do/projeto
+    ```
+
+2.  **Build da imagem:**
+
+    ``` bash
+    docker build -t api-meta-auto .
+    ```
+
+3.  **Execute o container:**
+
+    ``` bash
+    docker run -p 8000:8000 api-meta-auto
+    ```
+
+4.  **Acesse a API no navegador:**
+
+        http://localhost:8000
+
+------------------------------------------------------------------------
+
+## 📂 📂 Estrutura do Projeto
 
 * `lstm.ipynb`: Jupyter Notebook contendo a análise exploratória, pré-processamento, treinamento e avaliação do modelo.
 * `main.py`: Aplicação FastAPI que carrega o modelo treinado e expõe o endpoint de previsão.
@@ -79,6 +111,18 @@ python start_project.py
 * `start_project.py`: Script utilitário para construir e rodar o container Docker automaticamente.
 * `test_api.py`: Script para testar a API enviando dados reais recentes.
 
+    📁 projeto-meta-lstm
+    │── lstm.ipynb          → Treinamento e validação do modelo
+    │── main.py             → API FastAPI com endpoint de previsão
+    │── Dockerfile          → Configuração do container
+    │── requirements.txt    → Dependências
+    │── start_project.py    → Execução automática do Docker
+    │── test_api.py         → Script de teste da API
+    │── environment ──
+                      │── modelo_lstm.pth
+                      │── scaler.pkl
+
+------------------------------------------------------------------------
 
 ---
 
@@ -90,27 +134,6 @@ python start_project.py
 | **Otimizador** | Adam (Learning Rate: 0.001) |
 | **Função de Perda** | MSE (Mean Squared Error) |
 | **Escalonamento** | MinMaxScaler no intervalo $[0, 1]$ |
-
----
-
-## 🐳 Execução Manual via Docker
-
-Para garantir a escalabilidade e consistência do ambiente, utilize os comandos abaixo (requer **Docker Desktop** ativo):
-
-1.  **Aceder à pasta do projeto:**
-    ```bash
-    cd environment
-    ```
-2.  **Construir a imagem Docker:**
-    ```bash
-    docker build -t api-meta-auto .
-    ```
-3.  **Iniciar o container:**
-    ```bash
-    docker run -p 8000:8000 --rm api-meta-auto
-    ```
-4.  **Testar a API:**
-    Acesse a documentação interativa em: **`http://localhost:8000`**
 
 ---
 
@@ -132,38 +155,24 @@ A API disponibiliza uma interface visual para explorar e testar os endpoints de 
 
 ---
 
-### Exemplo de Corpo da Requisição
-
-> A lista `prices` deve conter **exatamente os últimos 60 preços de fechamento**.
-
-```json
-{
-  "ticker": "META",
-  "prices": [
-    180.50,
-    182.30,
-    181.10,
-    183.75,
-    185.20,
-    187.40,
-    190.10,
-    192.35,
-    195.60,
-    198.45,
-    200.10,
-    202.30,
-    205.50
-  ]
-}
-
-{
-  "status": "sucesso",
-  "ticker": "META",
-  "predicted_next_close": 208.45
-}
-
 ### ⚡ Teste Rápido via Script
 
 Para validar a API utilizando dados reais recentes, execute o script abaixo:
 
 python test_api.py
+
+---
+
+## 📊 Monitorização de Performance
+
+O sistema possui um Middleware de Observabilidade integrado. A cada requisição, ele registra no console do Docker:
+
+ROTA: O endpoint acessado.
+
+STATUS: Código HTTP (200, 400, 500).
+
+TEMPO: Latência da resposta em segundos.
+
+RAM: Consumo de memória do processo (MB).
+
+CPU: Utilização do processador (%).
